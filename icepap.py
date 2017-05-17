@@ -1,5 +1,3 @@
-# !IMPORTANT! solaris_sardana_utils depends on old repos and build method
-
 from sardana.macroserver.macro import Macro, Type
 from solaris_sardana_utils.icepap import create_motor_info_dict, home, home_group, home_strict, home_group_strict
 

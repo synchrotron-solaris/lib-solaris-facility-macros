@@ -1,5 +1,4 @@
 # !IMPORTANT! Not adapted for Sardana 2.x
-# !IMPORTANT! solaris_sardana_utils depends on old repos and build method
 
 from sardana.macroserver.macro import Macro, Type, ParamRepeat
 
