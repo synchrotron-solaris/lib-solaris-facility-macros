@@ -18,6 +18,5 @@ setup(
 	url			=	"http://git.m.cps.uj.edu.pl/beamline-software/lib-solaris-facility-macros",
 	packages	=	["facility"],
 	package_dir	=	{"facility": "."},
-	zip_safe	=	False,
-	setup_cfg	=	True
+	zip_safe	=	False
 )
