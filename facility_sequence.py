@@ -38,30 +38,32 @@ class seq(Macro):
 		if self.current:
 			self.current.stop()
 
-class useq(Macro):
+class umacro(Macro):
 	"""Run a sequence of macros (spock style) saved in txt file"""
 
 	param_def = [
-		['sequence_name',   Type.String,   None, 'Name of file (without extention) includes user sequence']
+		['sequence_name',   Type.String,   None, 'Name of file (without extention) includes user macro']
 	]
 
 	def run(self, *pars):
-		self.output("Running macro useq " + pars[0])
+		self.output("Start of umacro " + pars[0])
 		try:
-			useq_dir = self.getEnv('UseqDir')
+			macro_dir = self.getEnv('MacroDir')
 		except:
-			self.error("Aborting - undefined UseqDir (user sequences directory) environment variable")
-			self.error("Use senv macro to define it. Example: \"senv UseqDir /home/user/sequences/\"")
-			self.error("Remember about slash at the end of directory path")
+			self.error("Aborting - undefined MacroDir (user macro directory) environment variable")
+			self.error("Use senv to define it. Example: \"senv MacroDir /home/user/sequences/\"")
 			self.abort()
-		name = useq_dir + pars[0] + ".txt"
-		self.output("User macro file name: " + name)
+		if not macro_dir.endswith("/"):
+			macro_dir += "/"
+		name = macro_dir + pars[0] + ".txt"
 		nr = 0
 		error = 0
 		with open(name, "r") as inputFile:
 			for lineIn in inputFile:
-				macro = lineIn.rstrip()
+				macro = lineIn.strip()
 				nr += 1
+				if macro.startswith("#"):
+					continue
 				if macro == "":
 					continue
 				try:
@@ -74,25 +76,28 @@ class useq(Macro):
 			self.abort()
 		with open(name, "r") as inputFile:
 			for lineIn in inputFile:
-				macro = lineIn.rstrip()
+				macro = lineIn.strip()
+				if macro.startswith("#"):
+					continue
 				if macro == "":
 					continue
-				self.output("Executing --> " + lineIn.rstrip())
+				self.info("Running macro: " + lineIn.rstrip())
 				self.execMacro(macro)
-		self.output("End of macro useq " + pars[0])
+		self.info("End of umacro " + pars[0])
 
-class lsuseq(Macro):
+class lsumacro(Macro):
 	"""List of user defined sequences stored in txt files"""
 	def run(self):
 		try:
-			useq_dir = self.getEnv('UseqDir')
+			macro_dir = self.getEnv('MacroDir')
 		except:
-			self.error("Aborting - undefined UseqDir (user sequences directory) environment variable")
-			self.error("Use senv macro to define it. Example: \"senv UseqDir /home/user/sequences/\"")
-			self.error("Remember about slash at the end of directory path")
+			self.error("Aborting - undefined MacroDir (user macro directory) environment variable")
+			self.error("Use senv to define it. Example: \"senv MacroDir /home/user/sequences/\"")
 			self.abort()
-		self.info("List of user sequences from directory " + useq_dir)
-		for file in sorted(os.listdir(useq_dir)):
+		self.info("List of user macros from directory " + macro_dir)
+		if not macro_dir.endswith("/"):
+			macro_dir += "/"
+		for file in sorted(os.listdir(macro_dir)):
 			if file.endswith(".txt"):
 				self.output(file.split(".")[0])
 
