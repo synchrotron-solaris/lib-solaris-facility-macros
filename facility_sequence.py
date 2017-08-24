@@ -41,7 +41,7 @@ class useq(Macro):
 	"""Run a sequence of macros (spock style) saved in txt file"""
 
 	param_def = [
-		['file_name',   Type.String,   None, 'Name of file (without extention) includes user sequence']
+		['sequence_name',   Type.String,   None, 'Name of file (without extention) includes user sequence']
 	]
 
 	def run(self, *pars):
