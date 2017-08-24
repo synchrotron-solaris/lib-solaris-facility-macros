@@ -37,6 +37,44 @@ class seq(Macro):
 		if self.current:
 			self.current.stop()
 
+class useq(Macro):
+	"""Run a sequence of macros (spock style) saved in txt file"""
+
+	param_def = [
+		['file_name',   Type.String,   None, 'Name of file (without extention) includes user sequence']
+	]
+
+	def run(self, *pars):
+		self.output("Running macro useq " + pars[0])
+		try:
+			useq_dir = self.getEnv('UseqDir')
+		except:
+			self.error("Aborting - undefined UseqDir (user sequences directory) environment variable")
+			self.error("Use senv macro to define it. Example: \"senv UseqDir /home/user/sequences/\"")
+			self.error("Remember about slash at the end of directory path")
+			self.abort()
+		name = useq_dir + pars[0] + ".txt"
+		self.output("User macro file name: " + name)
+		nr = 0
+		error = 0
+		with open(name, "r") as inputFile:
+			for lineIn in inputFile:
+				macro = lineIn.rstrip()
+				nr += 1
+				try:
+					self.prepareMacro(macro)
+				except Exception as e:
+					error = 1
+					self.error("Error in line " + str(nr) + " -> " + lineIn.rstrip())
+					self.error(e.message)
+		if error == 1:
+			self.abort()
+		with open(name, "r") as inputFile:
+			for lineIn in inputFile:
+				self.output("Executing --> " + lineIn.rstrip())
+				macro = lineIn.rstrip()
+				self.execMacro(macro)
+		self.output("End of macro useq " + pars[0])
 
 class rep(Macro):
 	""" Repeat executing macro """
