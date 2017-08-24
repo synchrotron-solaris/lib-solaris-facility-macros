@@ -61,6 +61,8 @@ class useq(Macro):
 			for lineIn in inputFile:
 				macro = lineIn.rstrip()
 				nr += 1
+				if macro == "":
+					continue
 				try:
 					self.prepareMacro(macro)
 				except Exception as e:
@@ -71,8 +73,10 @@ class useq(Macro):
 			self.abort()
 		with open(name, "r") as inputFile:
 			for lineIn in inputFile:
-				self.output("Executing --> " + lineIn.rstrip())
 				macro = lineIn.rstrip()
+				if macro == "":
+					continue
+				self.output("Executing --> " + lineIn.rstrip())
 				self.execMacro(macro)
 		self.output("End of macro useq " + pars[0])
 
