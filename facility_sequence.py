@@ -1,4 +1,5 @@
 from sardana.macroserver.macro import Macro, Type
+import os
 
 
 class seq(Macro):
@@ -79,6 +80,21 @@ class useq(Macro):
 				self.output("Executing --> " + lineIn.rstrip())
 				self.execMacro(macro)
 		self.output("End of macro useq " + pars[0])
+
+class lsuseq(Macro):
+	"""List of user defined sequences stored in txt files"""
+	def run(self):
+		try:
+			useq_dir = self.getEnv('UseqDir')
+		except:
+			self.error("Aborting - undefined UseqDir (user sequences directory) environment variable")
+			self.error("Use senv macro to define it. Example: \"senv UseqDir /home/user/sequences/\"")
+			self.error("Remember about slash at the end of directory path")
+			self.abort()
+		self.info("List of user sequences from directory " + useq_dir)
+		for file in sorted(os.listdir(useq_dir)):
+			if file.endswith(".txt"):
+				self.output(file.rstrip(".txt"))
 
 class rep(Macro):
 	""" Repeat executing macro """
