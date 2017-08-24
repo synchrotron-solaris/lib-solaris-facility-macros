@@ -46,7 +46,7 @@ class umacro(Macro):
 	]
 
 	def run(self, *pars):
-		self.output("Start of umacro " + pars[0])
+		self.info("Start of umacro " + pars[0])
 		try:
 			macro_dir = self.getEnv('MacroDir')
 		except:
