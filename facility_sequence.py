@@ -94,7 +94,7 @@ class lsuseq(Macro):
 		self.info("List of user sequences from directory " + useq_dir)
 		for file in sorted(os.listdir(useq_dir)):
 			if file.endswith(".txt"):
-				self.output(file.rstrip(".txt"))
+				self.output(file.split(".")[0])
 
 class rep(Macro):
 	""" Repeat executing macro """
