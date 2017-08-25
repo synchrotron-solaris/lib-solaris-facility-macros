@@ -45,59 +45,66 @@ class umacro(Macro):
 		['sequence_name',   Type.String,   None, 'Name of file (without extention) includes user macro']
 	]
 
+	#    env = ('MacroDir')
+
 	def run(self, *pars):
-		self.info("Start of umacro " + pars[0])
+
 		try:
-			macro_dir = self.getEnv('MacroDir')
+			macroDir = self.getEnv('MacroDir')
 		except:
 			self.error("Aborting - undefined MacroDir (user macro directory) environment variable")
 			self.error("Use senv to define it. Example: \"senv MacroDir /home/user/sequences/\"")
 			self.abort()
-		if not macro_dir.endswith("/"):
-			macro_dir += "/"
-		name = macro_dir + pars[0] + ".txt"
+		if not macroDir.endswith("/"):
+			macroDir += "/"
+		name = macroDir + pars[0] + ".txt"
 		nr = 0
 		error = 0
+		macrolist = []
 		with open(name, "r") as inputFile:
 			for lineIn in inputFile:
-				macro = lineIn.strip()
+				line = lineIn.strip()
 				nr += 1
-				if macro.startswith("#"):
+				if line.startswith("#"):  # ignore comments
 					continue
-				if macro == "":
+				if line == "":  # ignore empty lines
 					continue
 				try:
-					self.prepareMacro(macro)
+					macro, _ = self.createMacro(line)  # macro validation
 				except Exception as e:
 					error = 1
 					self.error("Error in line " + str(nr) + " -> " + lineIn.rstrip())
 					self.error(e.message)
+				macro._desc = line
+				macrolist.append(macro)
 		if error == 1:
+			macrolist = []
 			self.abort()
-		with open(name, "r") as inputFile:
-			for lineIn in inputFile:
-				macro = lineIn.strip()
-				if macro.startswith("#"):
-					continue
-				if macro == "":
-					continue
-				self.info("Running macro: " + lineIn.rstrip())
-				self.execMacro(macro)
+		self.info("Start of umacro " + pars[0])
+		for macro in macrolist:  #execute sequence of macros from list
+			self.info("Running macro: " + macro.getDescription())
+			self.current = macro
+			self.runMacro(macro)
+			self.current = None
 		self.info("End of umacro " + pars[0])
+
+	def on_abort(self):
+		if self.current:
+			self.current.stop()
 
 class lsumacro(Macro):
 	"""List of user defined sequences stored in txt files"""
 	def run(self):
 		try:
-			macro_dir = self.getEnv('MacroDir')
+			macroDir = self.getEnv('MacroDir')
 		except:
 			self.error("Aborting - undefined MacroDir (user macro directory) environment variable")
 			self.error("Use senv to define it. Example: \"senv MacroDir /home/user/sequences/\"")
 			self.abort()
-		self.info("List of user macros from directory " + macro_dir)
-		if not macro_dir.endswith("/"):
-			macro_dir += "/"
-		for file in sorted(os.listdir(macro_dir)):
+		self.info("List of user macros from directory " + macroDir)
+		if not macroDir.endswith("/"):
+			macroDir += "/"
+		for file in sorted(os.listdir(macroDir)):
 			if file.endswith(".txt"):
 				self.output(file.split(".")[0])
 
