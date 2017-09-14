@@ -42,7 +42,7 @@ class umacro(Macro):
 	"""Run a sequence of macros (spock style) saved in txt file"""
 
 	param_def = [
-		['sequence_name',   Type.String,   None, 'Name of file (without extention) includes user macro']
+		['macro_name',   Type.String,   None, 'Name of file (without extention) includes user macro']
 	]
 
 	#    env = ('MacroDir')
@@ -64,6 +64,7 @@ class umacro(Macro):
 		with open(name, "r") as inputFile:
 			for lineIn in inputFile:
 				line = lineIn.strip()
+				line = line.lower()
 				nr += 1
 				if line.startswith("#"):  # ignore comments
 					continue
@@ -82,7 +83,13 @@ class umacro(Macro):
 			self.abort()
 		self.info("Start of umacro " + pars[0])
 		for macro in macrolist:  #execute sequence of macros from list
-			self.info("Running macro: " + macro.getDescription())
+			if macro.getDescription().startswith("echo"):
+				comments = ""
+				for comment in macro.getDescription().split()[1:]:
+					comments = comments + comment + ' '
+				self.info(comments)
+			else:
+				self.info("Running macro: " + macro.getDescription())
 			self.current = macro
 			self.runMacro(macro)
 			self.current = None
@@ -91,6 +98,33 @@ class umacro(Macro):
 	def on_abort(self):
 		if self.current:
 			self.current.stop()
+
+class prudef(Macro):
+	"""Print user macro content"""
+
+	param_def = [
+		['macro_name',   Type.String,   None, 'Name of file (without extention) includes user macro']
+	]
+
+	#    env = ('MacroDir')
+
+	def run(self, *pars):
+
+		try:
+			macroDir = self.getEnv('MacroDir')
+		except:
+			self.error("Aborting - undefined MacroDir (user macro directory) environment variable")
+			self.error("Use senv to define it. Example: \"senv MacroDir /home/user/sequences/\"")
+			self.abort()
+		if not macroDir.endswith("/"):
+			macroDir += "/"
+		name = macroDir + pars[0] + ".txt"
+		nr = 0
+		error = 0
+		macrolist = []
+		with open(name, "r") as inputFile:
+			for lineIn in inputFile:
+				self.output(lineIn.strip())
 
 class lsumacro(Macro):
 	"""List of user defined sequences stored in txt files"""
