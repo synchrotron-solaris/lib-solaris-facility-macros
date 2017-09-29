@@ -74,11 +74,11 @@ class umacro(Macro):
 					macro, _ = self.createMacro(line)
 					self.current = macro
 					self.runMacro(macro)
-					self.current = None
 				except Exception as e:
 					self.error("Error in line " + str(nr) + " -> " + line)
 					self.error(e.message)
 					self.abort()
+				self.current = None
 		self.info("End of umacro " + pars[0])
 
 	def on_abort(self):
