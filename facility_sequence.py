@@ -49,35 +49,35 @@ class umacro(Macro):
         Macro.__init__(self, *args, **kwargs)
         self.current = None
 
-	def run(self, *pars):
-		try:
-			macroDir = self.getEnv('MacroDir')
-		except:
-			self.error("Aborting - undefined MacroDir (user macro directory) environment variable")
-			self.error("Use senv to define it. Example: \"senv MacroDir /home/user/sequences/\"")
-			self.abort()
-		if not macroDir.endswith("/"):
-			macroDir += "/"
-		name = macroDir + pars[0] + ".txt"
-		with open(name, "r") as inputFile:
-			self.info("Start of umacro " + pars[0])
-			for lineIn in inputFile:
-				line = lineIn.strip()
-				line = line.lower()
-				if line.startswith("#"):  # ignore comments
-					continue
-				if line == "":  # ignore empty lines
-					continue
-				try:
-					m, _ = self.createMacro(line)
-				except Exception as e:
-					self.error("Following exception occured when preparing macro %s:\n%s" % (line, e))
-					break
-				self.output("--> Running macro: %s\n" % line)
-				self.current = m
-				self.runMacro(m)
-				self.current = None
-		self.info("End of umacro " + pars[0])
+    def run(self, *pars):
+        try:
+            macroDir = self.getEnv('MacroDir')
+        except:
+            self.error("Aborting - undefined MacroDir (user macro directory) environment variable")
+            self.error("Use senv to define it. Example: \"senv MacroDir /home/user/sequences/\"")
+            self.abort()
+        if not macroDir.endswith("/"):
+            macroDir += "/"
+        name = macroDir + pars[0] + ".txt"
+        with open(name, "r") as inputFile:
+            self.info("Start of umacro " + pars[0])
+            for lineIn in inputFile:
+                line = lineIn.strip()
+                line = line.lower()
+                if line.startswith("#"):  # ignore comments
+                    continue
+                if line == "":  # ignore empty lines
+                    continue
+                try:
+                    m, _ = self.createMacro(line)
+                except Exception as e:
+                    self.error("Following exception occured when preparing macro %s:\n%s" % (line, e))
+                    break
+                self.output("--> Running macro: %s\n" % line)
+                self.current = m
+                self.runMacro(m)
+                self.current = None
+        self.info("End of umacro " + pars[0])
 
     def on_abort(self):
         if self.current:
