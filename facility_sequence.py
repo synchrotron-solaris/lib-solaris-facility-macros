@@ -70,8 +70,12 @@ class umacro(Macro):
 				if line == "":  # ignore empty lines
 					continue
 				self.info("Running macro: " + line)
+				macro_list = line.split()
 				try:
-					self.execMacro(line)
+					if  len(macro_list) <= 1:
+						self.execMacro(macro_list[0])
+					else:
+						self.execMacro(macro_list)
 				except Exception as e:
 					self.error("Error in line " + str(nr) + " -> " + line)
 					self.error(e.message)
