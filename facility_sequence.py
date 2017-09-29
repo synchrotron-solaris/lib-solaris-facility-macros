@@ -59,9 +59,8 @@ class umacro(Macro):
 			macroDir += "/"
 		name = macroDir + pars[0] + ".txt"
 		nr = 0
-		error = 0
-		macrolist = []
 		with open(name, "r") as inputFile:
+			self.info("Start of umacro " + pars[0])
 			for lineIn in inputFile:
 				line = lineIn.strip()
 				line = line.lower()
@@ -70,29 +69,16 @@ class umacro(Macro):
 					continue
 				if line == "":  # ignore empty lines
 					continue
+				self.info("Running macro: " + line)
 				try:
-					macro, _ = self.createMacro(line)  # macro validation
+					macro, _ = self.createMacro(line)
+					self.current = macro
+					self.runMacro(macro)
+					self.current = None
 				except Exception as e:
-					error = 1
-					self.error("Error in line " + str(nr) + " -> " + lineIn.rstrip())
+					self.error("Error in line " + str(nr) + " -> " + line)
 					self.error(e.message)
-				macro._desc = line
-				macrolist.append(macro)
-		if error == 1:
-			macrolist = []
-			self.abort()
-		self.info("Start of umacro " + pars[0])
-		for macro in macrolist:  #execute sequence of macros from list
-			if macro.getDescription().startswith("echo"):
-				comments = ""
-				for comment in macro.getDescription().split()[1:]:
-					comments = comments + comment + ' '
-				self.info(comments)
-			else:
-				self.info("Running macro: " + macro.getDescription())
-			self.current = macro
-			self.runMacro(macro)
-			self.current = None
+					self.abort()
 		self.info("End of umacro " + pars[0])
 
 	def on_abort(self):
