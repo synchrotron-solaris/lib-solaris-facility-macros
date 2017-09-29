@@ -76,12 +76,8 @@ class umacro(Macro):
 					self.error("Error in line " + str(nr) + " -> " + line)
 					self.error(e.message)
 					self.abort()
-				self.current = None
 		self.info("End of umacro " + pars[0])
 
-	def on_abort(self):
-		if self.current:
-			self.current.stop()
 
 class prudef(Macro):
 	"""Print user macro content"""
