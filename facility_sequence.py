@@ -71,9 +71,7 @@ class umacro(Macro):
 					continue
 				self.info("Running macro: " + line)
 				try:
-					macro, _ = self.createMacro(line)
-					self.current = macro
-					self.runMacro(macro)
+					self.execMacro(line)
 				except Exception as e:
 					self.error("Error in line " + str(nr) + " -> " + line)
 					self.error(e.message)
