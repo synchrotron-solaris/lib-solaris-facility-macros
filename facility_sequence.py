@@ -39,13 +39,11 @@ class seq(Macro):
 			self.current.stop()
 
 class umacro(Macro):
-	"""Run a sequence of macros (spock style) saved in txt file"""
+    """Run a sequence of macros (spock style) saved in txt file"""
 
-	param_def = [
-		['macro_name',   Type.String,   None, 'Name of file (without extention) includes user macro']
-	]
-
-	#    env = ('MacroDir')
+    param_def = [
+        ['sequence_name',   Type.String,   None, 'Name of file (without extention) includes user macro']
+    ]
 
     def __init__(self, *args, **kwargs):
         Macro.__init__(self, *args, **kwargs)
@@ -61,13 +59,11 @@ class umacro(Macro):
 		if not macroDir.endswith("/"):
 			macroDir += "/"
 		name = macroDir + pars[0] + ".txt"
-		nr = 0
 		with open(name, "r") as inputFile:
 			self.info("Start of umacro " + pars[0])
 			for lineIn in inputFile:
 				line = lineIn.strip()
 				line = line.lower()
-				nr += 1
 				if line.startswith("#"):  # ignore comments
 					continue
 				if line == "":  # ignore empty lines
