@@ -47,8 +47,11 @@ class umacro(Macro):
 
 	#    env = ('MacroDir')
 
-	def run(self, *pars):
+    def __init__(self, *args, **kwargs):
+        Macro.__init__(self, *args, **kwargs)
+        self.current = None
 
+	def run(self, *pars):
 		try:
 			macroDir = self.getEnv('MacroDir')
 		except:
@@ -69,19 +72,20 @@ class umacro(Macro):
 					continue
 				if line == "":  # ignore empty lines
 					continue
-				self.info("Running macro: " + line)
-				macro_list = line.split()
 				try:
-					if  len(macro_list) <= 1:
-						self.execMacro(macro_list[0])
-					else:
-						self.execMacro(macro_list)
+					m, _ = self.createMacro(line)
 				except Exception as e:
-					self.error("Error in line " + str(nr) + " -> " + line)
-					self.error(e.message)
-					self.abort()
+					self.error("Following exception occured when preparing macro %s:\n%s" % (line, e))
+					break
+				self.output("--> Running macro: %s\n" % line)
+				self.current = m
+				self.runMacro(m)
+				self.current = None
 		self.info("End of umacro " + pars[0])
 
+    def on_abort(self):
+        if self.current:
+            self.current.stop()
 
 class prudef(Macro):
 	"""Print user macro content"""
