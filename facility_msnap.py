@@ -1,19 +1,20 @@
-from sardana.macroserver.macro import Macro, Type
+from sardana.macroserver.macro import Macro, Type, ParamRepeat
 import os
-
+from datetime import datetime
 
 
 class msnap(Macro):
     """Creates snapshot of positions of all motors"""
     param_def = [
-        ['comment', Type.String, None,
-         'Comment for snapshot']
+        ['comment_list',
+         ParamRepeat(['comment', Type.String, None, 'something']),
+         None, 'Comment for snapshot']
     ]
 
     def __init__(self, *args, **kwargs):
         Macro.__init__(self, *args, **kwargs)
 
-    def run(self, *pars):
+    def run(self, coms):
         try:
             snapDir = self.getEnv('SnapDir')
         except:
@@ -33,55 +34,88 @@ class msnap(Macro):
             snapID = 0
         snapID = snapID + 1
 
-        name = snapDir + pars[0] + ".txt" # do zrobienia
-
-        with open(name, "r") as inputFile:
+        timestamp = str(datetime.now())
+        timestamp = timestamp.split(".")[0]
+        name = str(snapID) + "_" + timestamp + "_" + " ".join(coms) + ".txt"
+        with open(snapDir + name, "w") as outputFile:
             self.setEnv('SnapID', snapID)
             self.info("Start of snapshot " + str(snapID))
-            motors = self.findObjs("", type=Type.Moveable, subtype="Motor")
+            motors = self.findObjs(".*", type_class=Type.Moveable, subtype="Motor")
             for motor in motors:
-                # test = motors[motor].name
-                print motor
+                # self.info(str(motor))
+                name = str(motor.getName())
+                position = str(motor.getPosition())
+                outputFile.write(name + " " + position + "\n")
+            self.info("End of snapshot " + str(snapID))
 
 
-        #     for lineIn in inputFile:
-        #         line = lineIn.strip()
-        #         line = line.lower()
-        #         if line.startswith("#"):  # ignore comments
-        #             continue
-        #         if line == "":  # ignore empty lines
-        #             continue
-        #         try:
-        #             m, _ = self.createMacro(line)
-        #         except Exception as e:
-        #             self.error(
-        #                 "Following exception occured when preparing macro %s:\n%s" % (
-        #                 line, e))
-        #             break
-        #         self.output("--> Running macro: %s\n" % line)
-        #         self.current = m
-        #         self.runMacro(m)
-        #         self.current = None
-        # self.info("End of umacro " + pars[0])
-
-
-class delmsnap(Macro):
+class delsnap(Macro):
     """Deletes previously created snapshot"""
+    param_def = [
+        ['snap_nr', Type.Integer, None, 'Number of snapshot to delete']
+    ]
+
+    def run(self, snap_nr):
+        try:
+            snapDir = self.getEnv('SnapDir')
+        except:
+            self.error("Aborting - undefined SnapDir (motor snapshot directory) environment variable")
+            self.error("Use senv to define it. Example: \"senv SnapDir /home/user/snapshots/\"")
+            self.abort()
+        if not snapDir.endswith("/"):
+            snapDir += "/"
+        for snap_file in sorted(os.listdir(snapDir)):
+            if snap_file.startswith(str(snap_nr)):
+                os.remove(snapDir + str(snap_file))
+                self.info("Snapshot deleted")
+                break
+        else:
+            self.error("There's no such snapshot")
+            return
 
 
-
-class lsmsnap(Macro):
-    """List of user defined sequences stored in txt files"""
+class lssnap(Macro):
+    """List of created snapshots stored in txt files"""
     def run(self):
         try:
-            macroDir = self.getEnv('MacroDir')
+            snapDir = self.getEnv('SnapDir')
         except:
-            self.error("Aborting - undefined MacroDir (user macro directory) environment variable")
-            self.error("Use senv to define it. Example: \"senv MacroDir /home/user/sequences/\"")
+            self.error("Aborting - undefined SnapDir (motor snapshot directory) environment variable")
+            self.error("Use senv to define it. Example: \"senv SnapDir /home/user/snapshots/\"")
             self.abort()
-        self.info("List of user macros from directory " + macroDir)
-        if not macroDir.endswith("/"):
-            macroDir += "/"
-        for file in sorted(os.listdir(macroDir)):
+        self.info("List of snapshots from directory " + snapDir)
+        if not snapDir.endswith("/"):
+            snapDir += "/"
+        for file in sorted(os.listdir(snapDir)):
             if file.endswith(".txt"):
-            self.output(file.split(".")[0])
+                self.output(file.split(".")[0])
+
+
+class umvsnap(Macro):
+    """Restore motors positions from snapshot"""
+    param_def = [
+        ['snap_nr', Type.Integer, None, 'Number of snapshot to restore']
+    ]
+
+    def run(self, snap_nr):
+        try:
+            snapDir = self.getEnv('SnapDir')
+        except:
+            self.error("Aborting - undefined SnapDir (motor snapshot directory) environment variable")
+            self.error("Use senv to define it. Example: \"senv SnapDir /home/user/snapshots/\"")
+            self.abort()
+        if not snapDir.endswith("/"):
+            snapDir += "/"
+        for snap_file in sorted(os.listdir(snapDir)):
+            if snap_file.startswith(str(snap_nr)):
+                with open(snapDir + snap_file, "r") as inputFile:
+                    command = str()
+                    for line in inputFile:
+                        name, position = line.strip("\n").split(" ")
+                        command += name + " " + position + " "
+                    command = "umv " + command
+                    self.execMacro(command)
+                    break
+        else:
+            self.error("There's no such snapshot")
+            return
