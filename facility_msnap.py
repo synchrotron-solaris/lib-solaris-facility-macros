@@ -7,7 +7,7 @@ class msnap(Macro):
     """Creates snapshot of positions of all motors"""
     param_def = [
         ['comment_list',
-         ParamRepeat(['comment', Type.String, None, 'something']),
+         ParamRepeat(['comment', Type.String, None, 'Comment for snapshot']),
          None, 'Comment for snapshot']
     ]
 
@@ -52,10 +52,13 @@ class msnap(Macro):
 class delsnap(Macro):
     """Deletes previously created snapshot"""
     param_def = [
-        ['snap_nr', Type.Integer, None, 'Number of snapshot to delete']
+        ['snap_number',
+         ParamRepeat(['number', Type.Integer, None, 'Numbers of snapshots to delete']),
+         None, 'Number of snapshot to delete']
     ]
 
-    def run(self, snap_nr):
+    def run(self, snap_numbers):
+        snap_numbers = list(set(snap_numbers))  # deleting duplicates
         try:
             snapDir = self.getEnv('SnapDir')
         except:
@@ -64,14 +67,14 @@ class delsnap(Macro):
             self.abort()
         if not snapDir.endswith("/"):
             snapDir += "/"
-        for snap_file in sorted(os.listdir(snapDir)):
-            if snap_file.startswith(str(snap_nr)):
-                os.remove(snapDir + str(snap_file))
-                self.info("Snapshot deleted")
-                break
-        else:
-            self.error("There's no such snapshot")
-            return
+        for snap_number in snap_numbers:
+            for snap_file in sorted(os.listdir(snapDir)):
+                if snap_file.startswith(str(snap_number)):
+                    os.remove(snapDir + str(snap_file))
+                    self.info("Snapshot " + str(snap_number) + " deleted")
+                    break
+            else:
+                self.error("There's no snapshot " + str(snap_number))
 
 
 class lssnap(Macro):
