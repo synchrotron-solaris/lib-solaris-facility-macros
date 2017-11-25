@@ -32,6 +32,13 @@ class msnap(Macro):
         except:
             self.setEnv('SnapID', 0)
             snapID = 0
+        try:
+            last_snap = int(sorted(os.listdir(snapDir))[-1].split("_")[0])
+            if snapID < last_snap:
+                snapID = last_snap
+                self.setEnv('SnapID', last_snap)
+        except:
+            pass
         snapID = snapID + 1
 
         timestamp = str(datetime.now())
