@@ -83,8 +83,12 @@ class delsnap(Macro):
         if not snapDir.endswith("/"):
             snapDir += "/"
         for snap_number in snap_numbers:
+            if len(str(snap_number)) == 1:
+                str_snap_nr = "00" + str(snap_number)
+            elif len(str(snap_number)) == 2:
+                str_snap_nr = "0" + str(snap_number)
             for snap_file in sorted(os.listdir(snapDir)):
-                if snap_file.startswith(str(snap_number)):
+                if snap_file.startswith(str_snap_nr):
                     os.remove(snapDir + str(snap_file))
                     self.info("Snapshot " + str(snap_number) + " deleted")
                     break
@@ -124,8 +128,12 @@ class umvsnap(Macro):
             self.abort()
         if not snapDir.endswith("/"):
             snapDir += "/"
+        if len(str(snap_nr)) == 1:
+            str_snap_nr = "00" + str(snap_nr)
+        elif len(str(snap_nr)) == 2:
+            str_snap_nr = "0" + str(snap_nr)
         for snap_file in sorted(os.listdir(snapDir)):
-            if snap_file.startswith(str(snap_nr)):
+            if snap_file.startswith(str_snap_nr):
                 with open(snapDir + snap_file, "r") as inputFile:
                     command = str()
                     for line in inputFile:
