@@ -36,7 +36,15 @@ class msnap(Macro):
 
         timestamp = str(datetime.now())
         timestamp = timestamp.split(".")[0]
-        name = str(snapID) + "_" + timestamp + "_" + " ".join(coms) + ".txt"
+
+        if snapID < 10:
+            str_snapID = "00" + str(snapID)
+        elif snapID < 100:
+            str_snapID = "0" + str(snapID)
+        else:
+            str_snapID = str(snapID)
+
+        name = str_snapID + "_" + timestamp + "_" + " ".join(coms) + ".txt"
         with open(snapDir + name, "w") as outputFile:
             self.setEnv('SnapID', snapID)
             self.info("Start of snapshot " + str(snapID))
