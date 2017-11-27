@@ -24,7 +24,7 @@ class setaxis(Macro):
             try:
                 dev_monoDS = tango.DeviceProxy('bl-04bm/ctl/bl-04bm-ctl-monoenenc')
             except:
-                self.error("Monoenenc device server not responding.")
+                self.error("Monochromator device server not responding.")
                 self.error("Axis has not been set.")
                 return
             try:
