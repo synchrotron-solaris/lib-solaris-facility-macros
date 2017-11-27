@@ -108,10 +108,11 @@ class lssnap(Macro):
         self.info("List of snapshots from directory " + snapDir)
         if not snapDir.endswith("/"):
             snapDir += "/"
+        self.output('ID\tTIMESTAMP\t\tCOMMENT')
         for file in sorted(os.listdir(snapDir)):
             if file.endswith(".txt"):
-                self.output(file.split(".")[0])
-
+                line = file.split(".")[0]
+                self.output(line.replace('_', '\t'))
 
 class umvsnap(Macro):
     """Restore motors positions from snapshot"""
