@@ -140,12 +140,19 @@ class umvsnap(Macro):
             if snap_file.startswith(str_snap_nr):
                 with open(self.snapDir + snap_file, "r") as inputFile:
                     command = str()
+                    counter = 0
                     for line in inputFile:
                         name, position = line.strip("\n").split(" ")
                         if position != 'None':
-                            command += name + " " + position + " "
-                    command = "umv " + command
-                    self.execMacro(command)
+                            motor = self.getMotor(name)
+                            if float(position) != motor.getPosition():
+                                command += name + " " + position + " "
+                                counter += 1
+                    if counter > 0:
+                        command = "umv " + command
+                        self.execMacro(command)
+                    else:
+                        self.info('There are no motors to move')
                     break
         else:
             self.error("There's no such snapshot")
