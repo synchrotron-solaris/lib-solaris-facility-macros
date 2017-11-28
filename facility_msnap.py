@@ -31,23 +31,20 @@ class msnap(Macro):
     def __init__(self, *args, **kwargs):
         Macro.__init__(self, *args, **kwargs)
 
+    def find_last_ID(self):
+        file_list = sorted(os.listdir(self.snapDir))
+        if len(file_list) == 0:
+            return 0
+        else:
+            return int(file_list[-1].split('_')[0])
+
     def run(self, coms):
         try:
             check_snapdir(self)
         except:
             return
-        try:
-            snapID = self.getEnv('SnapID')
-        except:
-            self.setEnv('SnapID', 0)
-            snapID = 0
-        try:
-            last_snap = int(sorted(os.listdir(self.snapDir))[-1].split("_")[0])
-            if snapID < last_snap:
-                snapID = last_snap
-                self.setEnv('SnapID', last_snap)
-        except:
-            pass
+
+        snapID = self.find_last_ID()
         snapID = snapID + 1
 
         timestamp = str(datetime.now())
@@ -62,7 +59,6 @@ class msnap(Macro):
 
         name = str_snapID + "_" + timestamp + "_" + " ".join(coms) + ".txt"
         with open(self.snapDir + name, "w") as outputFile:
-            self.setEnv('SnapID', snapID)
             self.info("Start of snapshot " + str(snapID))
             motors = self.findObjs(".*", type_class=Type.Moveable, subtype="Motor")
             for motor in motors:
@@ -113,8 +109,12 @@ class lssnap(Macro):
             check_snapdir(self)
         except:
             return
+        file_list = sorted(os.listdir(self.snapDir))
+        if len(file_list) == 0:
+            self.info('There are no motors snapshots saved')
+            return
         self.output('ID\tTIMESTAMP\t\tCOMMENT')
-        for file in sorted(os.listdir(self.snapDir)):
+        for file in file_list:
             if file.endswith(".txt"):
                 line = file.split(".")[0]
                 self.output(line.replace('_', '\t'))
@@ -140,12 +140,19 @@ class umvsnap(Macro):
             if snap_file.startswith(str_snap_nr):
                 with open(self.snapDir + snap_file, "r") as inputFile:
                     command = str()
+                    counter = 0
                     for line in inputFile:
                         name, position = line.strip("\n").split(" ")
                         if position != 'None':
-                            command += name + " " + position + " "
-                    command = "umv " + command
-                    self.execMacro(command)
+                            motor = self.getMotor(name)
+                            if float(position) != motor.getPosition():
+                                command += name + " " + position + " "
+                                counter += 1
+                    if counter > 0:
+                        command = "umv " + command
+                        self.execMacro(command)
+                    else:
+                        self.info('There are no motors to move')
                     break
         else:
             self.error("There's no such snapshot")
