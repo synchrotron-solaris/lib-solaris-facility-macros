@@ -90,6 +90,8 @@ class delsnap(Macro):
                 str_snap_nr = "00" + str(snap_number)
             elif len(str(snap_number)) == 2:
                 str_snap_nr = "0" + str(snap_number)
+            else:
+                str_snap_nr = str(snap_number)
             for snap_file in sorted(os.listdir(self.snapDir)):
                 if snap_file.startswith(str_snap_nr):
                     os.remove(self.snapDir + str(snap_file))
@@ -136,6 +138,8 @@ class umvsnap(Macro):
             str_snap_nr = "00" + str(snap_nr)
         elif len(str(snap_nr)) == 2:
             str_snap_nr = "0" + str(snap_nr)
+        else:
+            str_snap_nr = str(snap_nr)
         for snap_file in sorted(os.listdir(self.snapDir)):
             if snap_file.startswith(str_snap_nr):
                 with open(self.snapDir + snap_file, "r") as inputFile:
