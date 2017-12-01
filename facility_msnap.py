@@ -1,7 +1,8 @@
-from sardana.macroserver.macro import Macro, Type, ParamRepeat, macro
+from sardana.macroserver.macro import Macro, Type, ParamRepeat
 import os
 from datetime import datetime
-from taurus.console.table import Table
+from math import isnan
+from math import isinf
 
 
 def check_snapdir(context):
@@ -17,6 +18,11 @@ def check_snapdir(context):
 
     if not context.snapDir.endswith("/"):
         context.snapDir += "/"
+
+
+def except_motors():
+    """adds exception of motors not to be used in umvsnap"""
+    pass
 
 
 class msnap(Macro):
@@ -152,11 +158,16 @@ class umvsnap(Macro):
                         name, position, offset = line.strip("\n").split(" ")
                         if position != 'None' and offset != 'None':
                             motor = self.getMotor(name)
-                            if float(position) != motor.getPosition():
-                                command += name + " " + position + " "
-                                counter += 1
                             if float(offset) != motor.getOffset():
                                 motor.setOffset(offset)
+                                po = motor.getDialPositionObj()
+                                upper_dial = float(po.getMaxValue())
+                                lower_dial = float(po.getMinValue())
+                                upper = upper_dial + float(offset)
+                                lower = lower_dial + float(offset)
+                                self.execMacro("set_lim", motor, lower, upper)
+                            if float(position) != motor.getPosition():
+                                command += name + " " + position + " "
                                 counter += 1
                     if counter > 0:
                         command = "umv " + command
