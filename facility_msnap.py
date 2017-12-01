@@ -1,6 +1,7 @@
-from sardana.macroserver.macro import Macro, Type, ParamRepeat
+from sardana.macroserver.macro import Macro, Type, ParamRepeat, macro
 import os
 from datetime import datetime
+from taurus.console.table import Table
 
 
 def check_snapdir(context):
@@ -30,6 +31,7 @@ class msnap(Macro):
 
     def __init__(self, *args, **kwargs):
         Macro.__init__(self, *args, **kwargs)
+        self.all_names = []
 
     def find_last_ID(self):
         file_list = sorted(os.listdir(self.snapDir))
@@ -66,6 +68,7 @@ class msnap(Macro):
                 position = str(motor.getPosition())
                 offset = str(motor.getOffset())
                 outputFile.write(name + " " + position + " " + offset + "\n")
+                self.output("Motor " + name + " saved")
             self.info("End of snapshot " + str(snapID))
 
 
