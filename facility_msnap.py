@@ -62,10 +62,10 @@ class msnap(Macro):
             self.info("Start of snapshot " + str(snapID))
             motors = self.findObjs(".*", type_class=Type.Moveable, subtype="Motor")
             for motor in motors:
-                # self.info(str(motor))
                 name = str(motor.getName())
                 position = str(motor.getPosition())
-                outputFile.write(name + " " + position + "\n")
+                offset = str(motor.getOffset())
+                outputFile.write(name + " " + position + " " + offset + "\n")
             self.info("End of snapshot " + str(snapID))
 
 
@@ -146,11 +146,14 @@ class umvsnap(Macro):
                     command = str()
                     counter = 0
                     for line in inputFile:
-                        name, position = line.strip("\n").split(" ")
-                        if position != 'None':
+                        name, position, offset = line.strip("\n").split(" ")
+                        if position != 'None' and offset != 'None':
                             motor = self.getMotor(name)
                             if float(position) != motor.getPosition():
                                 command += name + " " + position + " "
+                                counter += 1
+                            if float(offset) != motor.getOffset():
+                                motor.setOffset(offset)
                                 counter += 1
                     if counter > 0:
                         command = "umv " + command
