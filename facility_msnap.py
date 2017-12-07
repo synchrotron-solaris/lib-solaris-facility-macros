@@ -202,7 +202,8 @@ class umvsnap(Macro):
             matchObj = re.match(r"ES[UDRL]", name)
             if matchObj:
                 motor = self.getMotor(name)
-                motor.setOffset(data)
+                if float(data) != motor.getOffset():
+                    motor.setOffset(data)
             matchObj = re.match(r"E[HV][OG]", name)
             if matchObj:
                 pseudomotor = self.getPseudoMotor(name)
