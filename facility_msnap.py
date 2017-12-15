@@ -2,8 +2,7 @@ from sardana.macroserver.macro import Macro, Type, ParamRepeat
 import os
 from datetime import datetime
 import re
-from math import isnan
-from math import isinf
+from tango import DeviceProxy
 
 
 def check_snapdir(context):
@@ -30,10 +29,6 @@ class msnap(Macro):
     ]
 
     snapDir = ''
-
-    def __init__(self, *args, **kwargs):
-        Macro.__init__(self, *args, **kwargs)
-        self.all_names = []
 
     def find_last_ID(self):
         file_list = sorted(os.listdir(self.snapDir))
@@ -64,31 +59,24 @@ class msnap(Macro):
         name = str_snapID + "_" + timestamp + "_" + " ".join(coms) + ".txt"
         with open(self.snapDir + name, "w") as outputFile:
             self.info("Start of snapshot " + str(snapID))
+            outputFile.write("#NAME\tDIAL_POSITION\tPOSITION\tSIGN\tOFFSET\n")
             motors = self.findObjs(".*", type_class=Type.Moveable,
                                    subtype="Motor")
             for motor in motors:
                 name = str(motor.getName())
-                matchObj = re.match(r"ES[UDRL]", name)
-                if matchObj:
-                    offset = str(motor.getOffset())
-                    outputFile.write(name + " " + offset + "\n")
-                    continue
+                dial_position = str(motor.getDialPosition())
                 position = str(motor.getPosition())
+                sign = str(motor.getSign())
                 offset = str(motor.getOffset())
-                outputFile.write(name + " " + position + " " + offset + "\n")
+                outputFile.write(name + "\t" + dial_position + "\t" + position + "\t" + sign + "\t" + offset + "\n")
                 self.output("Motor " + name + " saved")
-            pseudomotors = self.findObjs("E[HV][OG]", type_class=Type.Moveable, # ESU, ESD, ESR, ESL, EHO, EHG, EVO, EVG
-                                       subtype="Pseudomotor")
-            # self.info(pseudomotors)
+            pseudomotors = self.findObjs(r"E[HV][OG]", type_class=Type.Moveable, subtype="Pseudomotor")
             for pseudomotor in pseudomotors:
                 name = str(pseudomotor.getName())
-
                 position = str(pseudomotor.getPosition())
-                outputFile.write(name + " " + position + "\n")
+                outputFile.write(name + "\t" + position + "\n")
                 self.output("Pseudomotor " + name + " saved")
             self.info("End of snapshot " + str(snapID))
-
-
 
 
 class delsnap(Macro):
@@ -143,6 +131,7 @@ class lssnap(Macro):
                 line = file.split(".")[0]
                 self.output(line.replace('_', '\t'))
 
+
 class umvsnap(Macro):
     """Restore motors positions from snapshot"""
     param_def = [
@@ -150,6 +139,12 @@ class umvsnap(Macro):
     ]
 
     snapDir = ''
+
+    def __init__(self, *args, **kwargs):
+        Macro.__init__(self, *args, **kwargs)
+        self.command = str()
+        self.counter = 0
+        self.dial_motors = {}
 
     def run(self, snap_nr):
         try:
@@ -165,26 +160,52 @@ class umvsnap(Macro):
         for snap_file in sorted(os.listdir(self.snapDir)):
             if snap_file.startswith(str_snap_nr):
                 with open(self.snapDir + snap_file, "r") as inputFile:
-                    self.command = str()
-                    self.counter = 0
                     for line in inputFile:
-                        data = line.strip("\n").split(" ")
-                        if len(data) == 3:
-                            self.restore_motor(data[0], data[1], data[2])
+                        if line.startswith("#"):
+                            continue
+                        data = line.strip("\n").split("\t")
+                        if len(data) == 5:
+                            self.restore_motor(data[0], data[1], data[2], data[3], data[4])
                         else:
                             self.restore_pseudomotor(data[0], data[1])
-                    if self.counter > 0:
-                        self.execMacro("umv " + self.command)
-                    else:
-                        self.info('There are no motors to move')
-                    break
+                if self.counter > 0:
+                    self.execMacro("umv " + self.command)
+                    for name in self.dial_motors:
+                        motor = self.getMotor(name)
+                        dial_position = self.dial_motors[name]
+                        if motor.getDialPosition() != float(dial_position):
+                            self.error("Motor " + name + " is not OK")
+                        else:
+                            self.info("Motor " + name + " is OK")
+                else:
+                    self.info('There are no motors to restore')
+                break
         else:
             self.error("There's no such snapshot")
             return
 
-    def restore_motor(self, name, position, offset):
-        if position != 'None' and offset != 'None':
+    def restore_motor(self, name, dial_position, position, sign, offset):
+        if all([name, dial_position, position, sign, offset]):
             motor = self.getMotor(name)
+            matchObj = re.match(r"ES[UDRL]", name)
+            if matchObj:
+                if float(offset) != motor.getOffset():
+                    motor.setOffset(offset)
+                    return
+            if int(sign) != motor.getSign():
+                # motor.getAttrEG('sign').write(int(sign))  # there's no 'getSignObj' method
+                motor_dp = DeviceProxy(name)
+                motor_dp.Sign = int(sign)
+
+                po = motor.getPositionObj()
+                lower = -float(po.getMaxValue())
+                upper = -float(po.getMinValue())
+                command = name + " " + str(lower) + " " + str(upper)
+                self.output(command)
+                try:
+                    self.execMacro("set_lim " + command)
+                except:
+                    self.execMacro("set_lim " + command)
             if float(offset) != motor.getOffset():
                 motor.setOffset(offset)
                 po = motor.getDialPositionObj()
@@ -192,21 +213,22 @@ class umvsnap(Macro):
                 lower_dial = float(po.getMinValue())
                 upper = upper_dial + float(offset)
                 lower = lower_dial + float(offset)
-                self.execMacro("set_lim", motor, lower, upper)
+                command = name + " " + str(lower) + " " + str(upper)
+                self.output(command)
+                try:
+                    self.execMacro("set_lim " + command)
+                except:
+                    self.execMacro("set_lim " + command)
             if float(position) != motor.getPosition():
                 self.command += name + " " + position + " "
                 self.counter += 1
+            self.dial_motors[name] = dial_position
 
-    def restore_pseudomotor(self, name, data):
-        if data != 'None':
-            matchObj = re.match(r"ES[UDRL]", name)
-            if matchObj:
-                motor = self.getMotor(name)
-                if float(data) != motor.getOffset():
-                    motor.setOffset(data)
+    def restore_pseudomotor(self, name, position):
+        if position != 'None':
             matchObj = re.match(r"E[HV][OG]", name)
             if matchObj:
                 pseudomotor = self.getPseudoMotor(name)
-                if float(data) != pseudomotor.getPosition():
-                    self.command += name + " " + data + " "
+                if float(position) != pseudomotor.getPosition():
+                    self.command += name + " " + position + " "
                     self.counter += 1
