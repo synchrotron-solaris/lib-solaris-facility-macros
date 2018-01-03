@@ -20,7 +20,7 @@ class setaxis(Macro):
 
     def run(self, motor, pos):
         name = motor.getName()
-        if name in ['PLMPITCH', 'GRPITCH',]:
+        if name in ['PMPITCH', 'GRPITCH',]:
             try:
                 dev_monoDS = tango.DeviceProxy('bl-04bm/ctl/bl-04bm-ctl-monoenenc')
             except:
@@ -54,7 +54,7 @@ class setaxis(Macro):
         self.execMacro("set_lim", motor, lower, upper)
 
         # Set offsets to monoenenc DS attributes
-        if name.lower() == 'plmpitch':
+        if name.lower() == 'pmpitch':
             if gr_nr == 1:
                 dev_monoDS.write_attribute('MirrorAngleOffset1', new_offset)
             elif gr_nr == 2:
