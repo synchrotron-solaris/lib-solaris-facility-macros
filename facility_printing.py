@@ -11,7 +11,7 @@ from sardana.macroserver.macro import macro, Type
 
 
 def DoorCaptureThread(doorName, macro, cpi, lpi):
-	shared_path = "/opt/sardana-scans/print/"
+	shared_path = "/opt/sardana/print/"
 	door = PyTango.DeviceProxy(doorName)
 	tmp = NamedTemporaryFile(prefix="spockprint", delete=False)
 	param_fn = "cfg_%s" % os.path.basename(tmp.name)
