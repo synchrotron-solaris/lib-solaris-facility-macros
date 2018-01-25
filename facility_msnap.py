@@ -147,6 +147,7 @@ class umvsnap(Macro):
         self.command = str()
         self.counter = 0
         self.dial_motors = {}
+        self.mirror_motors = []
 
     def run(self, snap_nr):
         try:
@@ -171,14 +172,17 @@ class umvsnap(Macro):
                         elif len(data) == 2:
                             self.restore_pseudomotor(data[0], data[1])
                 if self.counter > 0:
-                    self.execMacro("umv " + self.command)
-                    for name in self.dial_motors:
-                        motor = self.getMotor(name)
-                        dial_position = self.dial_motors[name]
-                        if motor.getDialPosition() != float(dial_position):
-                            self.error("Motor " + name + " is not OK")
-                        else:
-                            self.info("Motor " + name + " is OK")
+                    self.output("umv " + self.command)
+                    for i in range(len(self.mirror_motors)):
+                        self.output("umv " + self.mirror_motors[i])
+                    # self.execMacro("umv " + self.command)
+                    # for name in self.dial_motors:
+                    #     motor = self.getMotor(name)
+                    #     dial_position = self.dial_motors[name]
+                    #     if motor.getDialPosition() != float(dial_position):
+                    #         self.error("Motor " + name + " is not OK")
+                    #     else:
+                    #         self.info("Motor " + name + " is OK")
                 else:
                     self.info('There are no motors to restore')
                 break
@@ -220,9 +224,14 @@ class umvsnap(Macro):
                 except:
                     self.execMacro("set_lim " + command)
             if float(position) != motor.getPosition():
-                self.command += name + " " + position + " "
+                matchObj = re.match(r"M[12345].*", name)
+                if matchObj:
+                    self.except_mirror_motor(name, position)
+                    # self.mirror_motors.append()
+                else:
+                    self.command += name + " " + position + " "
                 self.counter += 1
-            self.dial_motors[name] = dial_position
+                self.dial_motors[name] = dial_position
 
     def restore_pseudomotor(self, name, position):
         if position != 'None':
@@ -232,3 +241,13 @@ class umvsnap(Macro):
                 if float(position) != pseudomotor.getPosition():
                     self.command += name + " " + position + " "
                     self.counter += 1
+
+    def except_mirror_motor(self, name, position):
+        short_name = name[:2]
+        for i in range(len(self.mirror_motors)):
+            if short_name not in self.mirror_motors[i]:
+                self.mirror_motors[i] += name + " " + position + " "
+                break
+        else:
+            self.mirror_motors.append(name + " " + position + " ")
+
