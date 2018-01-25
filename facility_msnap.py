@@ -20,11 +20,18 @@ def check_snapdir(context):
 
 
 class msnap(Macro):
-    """Creates snapshot of positions of all motors"""
+    """Creates snapshot of positions of specified motors or all if not specified"""
+    # param_def = [
+    #     ['comment_list',
+    #      ParamRepeat(['comment', Type.String, None, 'Comment for snapshot']),
+    #      None, 'Comment for snapshot']
+    # ]
+
     param_def = [
-        ['comment_list',
-         ParamRepeat(['comment', Type.String, None, 'Comment for snapshot']),
-         None, 'Comment for snapshot']
+        ['comment', Type.String, None, 'Meaningful comment for snapshot'],
+        ['motors_list',
+        ParamRepeat(['motor_name', Type.Motor, None, 'Name of motor to save']),
+        None, 'List of motors to save in snapshot']
     ]
 
     snapDir = ''
@@ -36,7 +43,7 @@ class msnap(Macro):
         else:
             return int(file_list[-1].split('_')[0])
 
-    def run(self, coms):
+    def run(self, com, motors):
         try:
             check_snapdir(self)
         except:
@@ -55,12 +62,13 @@ class msnap(Macro):
         else:
             str_snapID = str(snapID)
 
-        name = str_snapID + "_" + timestamp + "_" + " ".join(coms) + ".txt"
+        name = str_snapID + "_" + timestamp + "_" + com + ".txt"
         with open(self.snapDir + name, "w") as outputFile:
             self.info("Start of snapshot " + str(snapID))
             outputFile.write("#NAME\tDIAL_POSITION\tPOSITION\tSIGN\tOFFSET\tBACKLASH\tSTEP_PER_UNIT\n")
-            motors = self.findObjs(".*", type_class=Type.Moveable,
-                                   subtype="Motor")
+            if motors == None:
+                motors = self.findObjs(".*", type_class=Type.Moveable, subtype="Motor")
+
             for motor in motors:
                 name = str(motor.getName())
                 dial_position = str(motor.getDialPosition())
