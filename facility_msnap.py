@@ -5,7 +5,7 @@ import re
 
 
 def check_snapdir(context):
-    """checks if SnapDir variable is set properly"""
+    """Checks if SnapDir variable is set properly"""
     try:
         context.snapDir = context.getEnv('SnapDir')
     except:
@@ -31,6 +31,7 @@ class msnap(Macro):
     snapDir = ''
 
     def find_last_ID(self):
+        """Find Id of last snapshot taken"""
         file_list = sorted(os.listdir(self.snapDir))
         if len(file_list) == 0:
             return 0
@@ -84,7 +85,7 @@ class msnap(Macro):
 
 
 class delsnap(Macro):
-    """Deletes previously created snapshot"""
+    """Deletes previously created snapshot(s)"""
     param_def = [
         ['snap_number',
          ParamRepeat(['number', Type.Integer, None, 'Numbers of snapshots to delete']),
@@ -193,6 +194,7 @@ class umvsnap(Macro):
             return
 
     def restore_motor(self, name, dial_position, position, sign, offset):
+        """Restore full configuration of a motor"""
         if all([name, dial_position, position, sign, offset]):
             motor = self.getMotor(name)
             matchObj = re.match(r"ES[UDRL]", name)
@@ -233,6 +235,7 @@ class umvsnap(Macro):
                 self.dial_motors[name] = dial_position
 
     def restore_pseudomotor(self, name, position):
+        """Restore full configuration of a motor"""
         if position != 'None':
             matchObj = re.match(r"E[HV][OG]", name)
             if matchObj:
@@ -242,6 +245,8 @@ class umvsnap(Macro):
                     self.counter += 1
 
     def except_mirror_motor(self, name, position):
+        """TEMPORARY: exception in handling motors, each mirror motor axis is moved in a separate command.
+        Will be removed in the future"""
         short_name = name[:2]
         for i in range(len(self.mirror_motors)):
             if short_name not in self.mirror_motors[i]:
