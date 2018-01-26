@@ -21,12 +21,6 @@ def check_snapdir(context):
 
 class msnap(Macro):
     """Creates snapshot of positions of specified motors or all if not specified"""
-    # param_def = [
-    #     ['comment_list',
-    #      ParamRepeat(['comment', Type.String, None, 'Comment for snapshot']),
-    #      None, 'Comment for snapshot']
-    # ]
-
     param_def = [
         ['comment', Type.String, None, 'Meaningful comment for snapshot'],
         ['motors_list',
@@ -213,7 +207,6 @@ class umvsnap(Macro):
                 lower = -float(po.getMaxValue())
                 upper = -float(po.getMinValue())
                 command = name + " " + str(lower) + " " + str(upper)
-                # self.output(command)
                 try:
                     self.execMacro("set_lim " + command)
                 except:
@@ -226,7 +219,6 @@ class umvsnap(Macro):
                 upper = upper_dial + float(offset)
                 lower = lower_dial + float(offset)
                 command = name + " " + str(lower) + " " + str(upper)
-                # self.output(command)
                 try:
                     self.execMacro("set_lim " + command)
                 except:
@@ -235,7 +227,6 @@ class umvsnap(Macro):
                 matchObj = re.match(r"M[12345].*", name)
                 if matchObj:
                     self.except_mirror_motor(name, position)
-                    # self.mirror_motors.append()
                 else:
                     self.command += name + " " + position + " "
                 self.counter += 1
