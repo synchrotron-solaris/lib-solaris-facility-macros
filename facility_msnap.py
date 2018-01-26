@@ -1,3 +1,23 @@
+"""
+This module contains 4 macros: msnap, delsnap, lssnap and umvsnap.
+These are for managing motors configuration (mainly position).
+
+
+*. msnap creates a snapshot of chosen motors (or all, if not specified)
+and save it to txt file in directory specified in SnapDir Sardana environmental variable.
+
+*. delsnap can delete one or more specified snapshot txt files
+
+*. lssnap list all saved snapshots
+
+*. umvsnap restores motors position and other parameters such as offset, sign, backlash,
+steps per unit and dial position. Those information are saved in specified snapshot to restore
+and it will affect only motors listed in a snapshot.
+TEMPORARY: now umvsnap only prints command which it would use to restore motors position
+and does nothing more (testing purposes).
+
+"""
+
 from sardana.macroserver.macro import Macro, Type, ParamRepeat
 import os
 from datetime import datetime
